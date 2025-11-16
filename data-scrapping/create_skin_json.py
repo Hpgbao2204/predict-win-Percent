@@ -90,7 +90,7 @@ def create_simple_mapping(skins_data):
 
 def main():
     """Main function"""
-    base_path = "./league-of-legends-skin-splash-art-collection"
+    base_path = "../league-of-legends-skin-splash-art-collection"
     
     print("Starting to scan skins directory...")
     skins_data = scan_skins_directory(base_path)
