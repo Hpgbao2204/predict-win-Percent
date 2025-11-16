@@ -2,6 +2,17 @@
 # -*- coding: utf-8 -*-
 """
 Script to create JSON file containing information about all skin splash art
+This script generates JSON files with RELATIVE PATHS for cross-machine portability.
+
+Usage:
+    cd data-scrapping/
+    python3 create_skin_json.py
+
+Output:
+    - skins_detailed.json: Complete information with all skins per champion
+    - skins_simple.json: Simple mapping champion -> default skin
+    
+All paths are relative to the champion_detection directory (../)
 """
 
 import os
@@ -41,8 +52,8 @@ def scan_skins_directory(base_path):
             skin_files = []
             for file_path in champion_folder.iterdir():
                 if file_path.is_file() and file_path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
-                    # Create relative path from project root
-                    relative_path = str(file_path.relative_to(Path(base_path)))
+                    # Create relative path from champion_detection directory
+                    relative_path = f"../league-of-legends-skin-splash-art-collection/skins/{champion_folder.name}/{file_path.name}"
                     skin_files.append(relative_path)
             
             # Add to dictionary
@@ -90,6 +101,7 @@ def create_simple_mapping(skins_data):
 
 def main():
     """Main function"""
+    # Use relative path from data-scrapping directory
     base_path = "../league-of-legends-skin-splash-art-collection"
     
     print("Starting to scan skins directory...")
