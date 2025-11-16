@@ -350,7 +350,7 @@ def handle_multi_detect_command(args):
 
 def handle_banpick_command(args):
     """Handle ban/pick detection command"""
-    from banpick_detector import BanPickDetector
+    from template_champion_detector import TemplateChampionDetector
     
     print(f"🎮 Ban/Pick Champion Detection")
     print(f"Image: {args.image_path}")
@@ -364,27 +364,28 @@ def handle_banpick_command(args):
         return
     
     try:
-        # Initialize ban/pick detector
-        detector = BanPickDetector()
+        # Initialize Template Matching detector  
+        detector = TemplateChampionDetector()
         
         # Run detection
-        results = detector.detect_champions_in_banpick(
+        results = detector.detect_champions(
             args.image_path,
-            expected_champions=args.expected,
+            layout="auto",
             confidence_threshold=args.confidence
         )
         
         # Display results
         print(f"\n🎯 Detection Results:")
         print("=" * 40)
-        print(f"📊 Champions Detected: {results['total_detected']}/{args.expected}")
-        print(f"� Image Size: {results['image_size']}")
-        print(f"🔍 Strategies: {', '.join(results['strategies_used'])}")
+        print(f"📊 Champions Detected: {results['total_detected']}/10")
+        print(f"📐 Image Size: {results['image_size']}")
+        print(f"🔍 Template Regions: {results['card_regions_found']}")
+        print(f"📋 Layout Used: {results['layout_used']}")
         
         if results['champions']:
             print(f"\n📋 Detected Champions:")
             for i, champ in enumerate(results['champions'], 1):
-                print(f"  {i:2d}. {champ['champion_name']:<15} (confidence: {champ['confidence']:.3f})")
+                print(f"  {i:2d}. {champ['champion_name']:<15} (Confidence: {champ['confidence']:.3f}, Method: {champ['detection_method']})")
             
             # Show unique champions
             unique_champions = list(set(c['champion_name'] for c in results['champions']))
