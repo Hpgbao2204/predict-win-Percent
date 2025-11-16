@@ -63,6 +63,26 @@ Examples:
     # Info command
     info_parser = subparsers.add_parser('info', help='Show system information')
     
+    # Multi-detect command (YOLO + CLIP)
+    multi_parser = subparsers.add_parser('multi-detect', help='Detect multiple champions in single image (YOLO + CLIP)')
+    multi_parser.add_argument('image_path', help='Path to input image (e.g., ban/pick screen)')
+    multi_parser.add_argument('--confidence', type=float, default=0.5,
+                            help='YOLO confidence threshold (default: 0.5)')
+    multi_parser.add_argument('--visualize', action='store_true',
+                            help='Create annotated output image')
+    multi_parser.add_argument('--output', help='Output path for annotated image')
+    
+    # Ban/Pick detection command  
+    banpick_parser = subparsers.add_parser('banpick', help='Detect champions in ban/pick screen (optimized for 10 champions)')
+    banpick_parser.add_argument('image_path', help='Path to ban/pick screenshot')
+    banpick_parser.add_argument('--confidence', type=float, default=0.7,
+                               help='Confidence threshold (default: 0.7)')
+    banpick_parser.add_argument('--expected', type=int, default=10,
+                               help='Expected number of champions (default: 10)')
+    banpick_parser.add_argument('--visualize', action='store_true',
+                               help='Create annotated output image')
+    banpick_parser.add_argument('--output', help='Output path for results')
+    
     # Test command
     test_parser = subparsers.add_parser('test', help='Run system tests')
     test_parser.add_argument('--api-key', help='OpenAI API key')
@@ -84,6 +104,10 @@ Examples:
     try:
         if args.command == 'detect':
             handle_detect_command(args)
+        elif args.command == 'multi-detect':
+            handle_multi_detect_command(args)
+        elif args.command == 'banpick':
+            handle_banpick_command(args)
         elif args.command == 'batch':
             handle_batch_command(args)
         elif args.command == 'info':
@@ -269,6 +293,124 @@ def print_system_info(info):
     print(f"  Similarity Threshold: {settings['similarity_threshold']}")
     print(f"  Top-K Results: {settings['top_k_results']}")
     print(f"  Max Image Size: {settings['max_image_size']}")
+
+def handle_multi_detect_command(args):
+    """Handle multi-champion detection command"""
+    from multi_champion_detector import MultiChampionDetector
+    
+    print(f"Multi-Champion Detection")
+    print(f"Image: {args.image_path}")
+    print(f"YOLO Confidence: {args.confidence}")
+    print("-" * 50)
+    
+    # Check if image exists
+    if not Path(args.image_path).exists():
+        print(f"❌ Image not found: {args.image_path}")
+        return
+    
+    try:
+        # Initialize multi-champion detector
+        detector = MultiChampionDetector()
+        
+        # Run detection
+        results = detector.detect_champions(args.image_path, args.confidence)
+        
+        # Display results
+        print(f"\n🎯 Detection Results:")
+        print("=" * 40)
+        print(f"📊 Total Champions Detected: {results['total_detected']}")
+        print(f"🔍 YOLO Detections: {results['yolo_detections']}")
+        
+        if results['champions']:
+            print(f"\n📋 Detected Champions:")
+            for i, champ in enumerate(results['champions'], 1):
+                print(f"  {i}. {champ['champion_name']}")
+                print(f"     CLIP Confidence: {champ['clip_confidence']:.3f}")
+                print(f"     YOLO Confidence: {champ['yolo_confidence']:.3f}")
+                print(f"     Bounding Box: {champ['bounding_box']}")
+                print()
+        else:
+            print("❌ No champions detected")
+        
+        # Create visualization if requested
+        if args.visualize:
+            output_path = args.output or f"multi_detection_{Path(args.image_path).stem}_annotated.jpg"
+            annotated_path = detector.visualize_results(args.image_path, results, output_path)
+            print(f"🎨 Annotated image saved: {annotated_path}")
+        
+        # Save results
+        results_file = f"multi_detection_results_{Path(args.image_path).stem}.json"
+        with open(results_file, 'w') as f:
+            json.dump(results, f, indent=2)
+        print(f"💾 Results saved: {results_file}")
+        
+    except Exception as e:
+        print(f"❌ Detection failed: {str(e)}")
+        raise
+
+def handle_banpick_command(args):
+    """Handle ban/pick detection command"""
+    from template_champion_detector import TemplateChampionDetector
+    
+    print(f"🎮 Ban/Pick Champion Detection")
+    print(f"Image: {args.image_path}")
+    print(f"Expected Champions: {args.expected}")
+    print(f"Confidence: {args.confidence}")
+    print("-" * 50)
+    
+    # Check if image exists
+    if not Path(args.image_path).exists():
+        print(f"❌ Image not found: {args.image_path}")
+        return
+    
+    try:
+        # Initialize Template Matching detector  
+        detector = TemplateChampionDetector()
+        
+        # Run detection
+        results = detector.detect_champions(
+            args.image_path,
+            layout="auto",
+            confidence_threshold=args.confidence
+        )
+        
+        # Display results
+        print(f"\n🎯 Detection Results:")
+        print("=" * 40)
+        print(f"📊 Champions Detected: {results['total_detected']}/10")
+        print(f"📐 Image Size: {results['image_size']}")
+        print(f"🔍 Template Regions: {results['card_regions_found']}")
+        print(f"📋 Layout Used: {results['layout_used']}")
+        
+        if results['champions']:
+            print(f"\n📋 Detected Champions:")
+            for i, champ in enumerate(results['champions'], 1):
+                print(f"  {i:2d}. {champ['champion_name']:<15} (Confidence: {champ['confidence']:.3f}, Method: {champ['detection_method']})")
+            
+            # Show unique champions
+            unique_champions = list(set(c['champion_name'] for c in results['champions']))
+            print(f"\n🏆 Unique Champions Found: {len(unique_champions)}")
+            print(f"    {', '.join(unique_champions)}")
+            
+        else:
+            print("❌ No champions detected")
+            print("💡 Try lowering --confidence or check image quality")
+        
+        # Create visualization
+        if args.visualize:
+            output_path = args.output or f"banpick_{Path(args.image_path).stem}_result.jpg"
+            annotated_path = detector.visualize_results(args.image_path, results, output_path)
+            print(f"\n🎨 Annotated result: {annotated_path}")
+        
+        # Save results
+        results_file = f"banpick_results_{Path(args.image_path).stem}.json"
+        with open(results_file, 'w') as f:
+            json.dump(results, f, indent=2, ensure_ascii=False)
+        print(f"💾 Results saved: {results_file}")
+        
+    except Exception as e:
+        print(f"❌ Detection failed: {str(e)}")
+        raise
 
 if __name__ == "__main__":
     main()

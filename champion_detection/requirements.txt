@@ -5,6 +5,9 @@ numpy>=1.24.0
 torch>=2.0.0
 torchvision>=0.15.0
 
+# YOLO for multi-champion detection
+ultralytics>=8.0.0
+
 # CLIP model
 clip-by-openai>=1.0
 transformers>=4.30.0
