@@ -1,0 +1,10 @@
+{
+  "input_image": "league-of-legends-skin-splash-art-collection/skins/Ahri/Ahri.jpg",
+  "timestamp": "2025-11-16T14:19:55.598786",
+  "method": "clip",
+  "results": {
+    "clip": []
+  },
+  "final_prediction": null,
+  "processing_time": 0.05563759803771973
+}

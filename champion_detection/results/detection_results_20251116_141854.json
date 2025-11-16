@@ -1,0 +1,10 @@
+{
+  "input_image": "champion_detection/test_images/Ahri.jpg",
+  "timestamp": "2025-11-16T14:18:54.216532",
+  "method": "clip",
+  "results": {
+    "clip": []
+  },
+  "final_prediction": null,
+  "processing_time": 0.05103945732116699
+}
